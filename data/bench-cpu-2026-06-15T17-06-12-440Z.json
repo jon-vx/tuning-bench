@@ -1,0 +1,133 @@
+{
+  "device": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+  "label": "",
+  "backend": "cpu",
+  "features": {
+    "cores": 16,
+    "memGB": 16,
+    "probeComputeMs": 0.25454545450029953,
+    "probeMemBandwidthGBs": 9.466767649345035,
+    "gpu": {
+      "vendor": "intel",
+      "architecture": "xe-lpg",
+      "device": "",
+      "description": "",
+      "limits": {
+        "maxBufferSize": 4294967292,
+        "maxComputeWorkgroupStorageSize": 65536,
+        "maxComputeInvocationsPerWorkgroup": 1024
+      }
+    }
+  },
+  "timestamp": "2026-06-15T17:06:12.440Z",
+  "results": [
+    {
+      "N": 128,
+      "variant": "numpy-ts.dot",
+      "iters": 562,
+      "median": 1.8137010676236127,
+      "p95": 2.0622775800711746,
+      "mean": 1.0566192170823807,
+      "min": 0.1250889679794846
+    },
+    {
+      "N": 128,
+      "variant": "handrolled-ijk",
+      "iters": 24,
+      "median": 1.9166666666666667,
+      "p95": 2.025000000062088,
+      "mean": 1.9199999999875825,
+      "min": 1.8541666666666667
+    },
+    {
+      "N": 128,
+      "variant": "handrolled-ikj",
+      "iters": 29,
+      "median": 2.1310344829127708,
+      "p95": 2.1999999998972335,
+      "mean": 2.1168965517189995,
+      "min": 2.048275862017582
+    },
+    {
+      "N": 256,
+      "variant": "numpy-ts.dot",
+      "iters": 4,
+      "median": 17.90000000037253,
+      "p95": 18.575000001117587,
+      "mean": 17.680000000074507,
+      "min": 16.824999999254942
+    },
+    {
+      "N": 256,
+      "variant": "handrolled-ijk",
+      "iters": 6,
+      "median": 16.016666666915018,
+      "p95": 16.366666667163372,
+      "mean": 15.914999999975162,
+      "min": 15.366666665921608
+    },
+    {
+      "N": 256,
+      "variant": "handrolled-ikj",
+      "iters": 4,
+      "median": 15.375,
+      "p95": 16.72499999962747,
+      "mean": 15.575,
+      "min": 14.800000000745058
+    },
+    {
+      "N": 512,
+      "variant": "numpy-ts.dot",
+      "iters": 1,
+      "median": 160.19999999552965,
+      "p95": 172.80000000447035,
+      "mean": 161.34000000059604,
+      "min": 151.69999999552965
+    },
+    {
+      "N": 512,
+      "variant": "handrolled-ijk",
+      "iters": 1,
+      "median": 158.39999999850988,
+      "p95": 161.70000000298023,
+      "mean": 157.78999999985098,
+      "min": 153.70000000298023
+    },
+    {
+      "N": 512,
+      "variant": "handrolled-ikj",
+      "iters": 1,
+      "median": 128.80000000447035,
+      "p95": 132.30000000447035,
+      "mean": 128.83000000044703,
+      "min": 127.10000000149012
+    },
+    {
+      "N": 1024,
+      "variant": "numpy-ts.dot",
+      "iters": 1,
+      "median": 2785.5,
+      "p95": 3046.5,
+      "mean": 2607.859999999404,
+      "min": 2228.7000000029802
+    },
+    {
+      "N": 1024,
+      "variant": "handrolled-ijk",
+      "iters": 1,
+      "median": 2228.4000000059605,
+      "p95": 2239.60000000149,
+      "mean": 2227.579999999702,
+      "min": 2217.60000000149
+    },
+    {
+      "N": 1024,
+      "variant": "handrolled-ikj",
+      "iters": 1,
+      "median": 1014.5,
+      "p95": 1023.3000000044703,
+      "mean": 1015.15,
+      "min": 1007.3999999985099
+    }
+  ]
+}

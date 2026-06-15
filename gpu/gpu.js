@@ -123,6 +123,8 @@ async function runBenchmark() {
   sessionMeta = {
     model: modelSelect.value,
     label: labelEl.value.trim(),
+    cores: navigator.hardwareConcurrency ?? null,
+    memGB: navigator.deviceMemory ?? null,
     warmup,
     runs,
     maxTokens,
@@ -226,13 +228,15 @@ const csvCell = (v) => {
 function exportCsv() {
   const gpu = sessionMeta.gpu ?? {};
   const header = [
-    "timestamp", "label", "model", "run_idx", "prompt_tokens", "completion_tokens",
+    "timestamp", "label", "cores", "mem_gb", "model", "run_idx", "prompt_tokens", "completion_tokens",
     "max_tokens", "prefill_tok_s", "decode_tok_s", "wall_ms",
     "gpu_vendor", "gpu_architecture", "gpu_device", "user_agent", "prompt",
   ];
   const rows = results.map((r, i) => [
     sessionMeta.timestamp,
     sessionMeta.label,
+    sessionMeta.cores,
+    sessionMeta.memGB,
     sessionMeta.model,
     i + 1,
     r.promptTokens,

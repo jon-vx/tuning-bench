@@ -39,8 +39,75 @@ export function verifyCorrectness(logFn = console.log) {
   return worst;
 }
 
+async function getGpuInfo() {
+  if (!navigator.gpu) return { error: "WebGPU not available" };
+  const adapter = await navigator.gpu.requestAdapter();
+  if (!adapter) return { error: "No WebGPU adapter" };
+  const info =
+    adapter.info ??
+    (adapter.requestAdapterInfo ? await adapter.requestAdapterInfo() : {});
+  return {
+    vendor: info.vendor ?? "",
+    architecture: info.architecture ?? "",
+    device: info.device ?? "",
+    description: info.description ?? "",
+    limits: {
+      maxBufferSize: adapter.limits?.maxBufferSize ?? null,
+      maxComputeWorkgroupStorageSize: adapter.limits?.maxComputeWorkgroupStorageSize ?? null,
+      maxComputeInvocationsPerWorkgroup: adapter.limits?.maxComputeInvocationsPerWorkgroup ?? null,
+    },
+  };
+}
+
+function probe() {
+  let acc = 0;
+
+  const PN = 64;
+  const pa = new Float32Array(PN * PN).map(() => Math.random());
+  const pb = new Float32Array(PN * PN).map(() => Math.random());
+  const computeFn = () => { acc += matmulIKJ(pa, pb, PN)[0]; };
+  const ci = calibrateIters(computeFn, 30).iters;
+  const cs = [];
+  for (let i = 0; i < 5; i++) cs.push(timeBatched(computeFn, ci));
+  const probeComputeMs = stats(cs).median;
+
+  const FLOATS = 4 * 1024 * 1024;
+  const buf = new Float32Array(FLOATS).map(() => Math.random());
+  const memFn = () => { let s = 0; for (let i = 0; i < buf.length; i++) s += buf[i]; acc += s; };
+  const mi = calibrateIters(memFn, 30).iters;
+  const ms = [];
+  for (let i = 0; i < 5; i++) ms.push(timeBatched(memFn, mi));
+  const probeMemBandwidthGBs = (FLOATS * 4) / (stats(ms).median / 1000) / 1e9;
+
+  return {
+    cores: navigator.hardwareConcurrency ?? null,
+    memGB: navigator.deviceMemory ?? null,
+    probeComputeMs,
+    probeMemBandwidthGBs,
+    checksum: acc,
+  };
+}
+
 export async function runCpuBenchmark(logFn = console.log, statusFn = () => { }, label = "") {
   verifyCorrectness(logFn);
+
+  statusFn("probing device...");
+  const p = probe();
+  const gpu = await getGpuInfo();
+  const features = {
+    cores: p.cores,
+    memGB: p.memGB,
+    probeComputeMs: p.probeComputeMs,
+    probeMemBandwidthGBs: p.probeMemBandwidthGBs,
+    gpu,
+  };
+  logFn(
+    `device: cores=${p.cores}, mem=${p.memGB ?? "?"}GB, ` +
+    `probe64=${p.probeComputeMs.toFixed(4)}ms, ` +
+    `bandwidth=${p.probeMemBandwidthGBs.toFixed(2)}GB/s, ` +
+    `gpu=${gpu.vendor || "?"}/${gpu.architecture || "?"}`
+  );
+  logFn(`probe checksum: ${p.checksum}`);
 
   let sink = 0;
   const results = [];
@@ -78,6 +145,7 @@ export async function runCpuBenchmark(logFn = console.log, statusFn = () => { },
     device: navigator.userAgent,
     label,
     backend: "cpu",
+    features,
     timestamp: new Date().toISOString(),
     results,
   };
@@ -114,12 +182,16 @@ function exportJson() {
 }
 
 function exportCsv() {
+  const f = lastPayload.features ?? {};
+  const g = f.gpu ?? {};
   const header = [
     "timestamp", "label", "device", "backend",
+    "cores", "mem_gb", "probe_compute_ms", "probe_mem_gbs", "gpu_vendor", "gpu_architecture",
     "N", "variant", "iters", "median_ms", "p95_ms", "mean_ms", "min_ms",
   ];
   const rows = lastPayload.results.map((r) => [
     lastPayload.timestamp, lastPayload.label, lastPayload.device, lastPayload.backend,
+    f.cores, f.memGB, f.probeComputeMs?.toFixed(4), f.probeMemBandwidthGBs?.toFixed(3), g.vendor, g.architecture,
     r.N, r.variant, r.iters,
     r.median.toFixed(4), r.p95.toFixed(4), r.mean.toFixed(4), r.min.toFixed(4),
   ]);

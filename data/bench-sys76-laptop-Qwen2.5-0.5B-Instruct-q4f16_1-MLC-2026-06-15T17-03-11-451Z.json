@@ -1,7 +1,9 @@
 {
   "meta": {
-    "model": "Llama-3.2-1B-Instruct-q4f16_1-MLC",
-    "label": "laptop-sys76",
+    "model": "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
+    "label": "sys76-laptop",
+    "cores": 16,
+    "memGB": 16,
     "warmup": 3,
     "runs": 10,
     "maxTokens": 128,
@@ -18,87 +20,87 @@
       }
     },
     "userAgent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
-    "timestamp": "2026-06-15T16:17:24.774Z"
+    "timestamp": "2026-06-15T17:03:11.451Z"
   },
   "results": [
     {
-      "wallMs": 6155.5,
-      "prefillTokS": 253.1646,
-      "decodeTokS": 21.2371,
+      "wallMs": 6799.89999999851,
+      "prefillTokS": 371.9447,
+      "decodeTokS": 18.987,
       "completionTokens": 127,
-      "promptTokens": 40,
+      "promptTokens": 35,
       "finishText": "Transformers were a pivotal moment in the development of art"
     },
     {
-      "wallMs": 6719.5,
-      "prefillTokS": 253.3249,
-      "decodeTokS": 19.4074,
+      "wallMs": 6995.80000000447,
+      "prefillTokS": 380.8487,
+      "decodeTokS": 18.4384,
       "completionTokens": 127,
-      "promptTokens": 40,
+      "promptTokens": 35,
       "finishText": "Transformers were a pivotal moment in the development of art"
     },
     {
-      "wallMs": 6637.19999999553,
-      "prefillTokS": 258.565,
-      "decodeTokS": 19.6467,
+      "wallMs": 6717.19999999553,
+      "prefillTokS": 373.5326,
+      "decodeTokS": 19.2235,
       "completionTokens": 127,
-      "promptTokens": 40,
+      "promptTokens": 35,
       "finishText": "Transformers were a pivotal moment in the development of art"
     },
     {
-      "wallMs": 6250.20000000298,
-      "prefillTokS": 255.4278,
-      "decodeTokS": 20.895,
+      "wallMs": 6755.70000000298,
+      "prefillTokS": 353.1786,
+      "decodeTokS": 19.1251,
       "completionTokens": 127,
-      "promptTokens": 40,
+      "promptTokens": 35,
       "finishText": "Transformers were a pivotal moment in the development of art"
     },
     {
-      "wallMs": 6149.5999999940395,
-      "prefillTokS": 262.1232,
-      "decodeTokS": 21.2371,
+      "wallMs": 6667.10000000149,
+      "prefillTokS": 339.1473,
+      "decodeTokS": 19.3943,
       "completionTokens": 127,
-      "promptTokens": 40,
+      "promptTokens": 35,
       "finishText": "Transformers were a pivotal moment in the development of art"
     },
     {
-      "wallMs": 6374.79999999702,
-      "prefillTokS": 258.2311,
-      "decodeTokS": 20.4733,
+      "wallMs": 6808.20000000298,
+      "prefillTokS": 313.9013,
+      "decodeTokS": 19.0108,
       "completionTokens": 127,
-      "promptTokens": 40,
+      "promptTokens": 35,
       "finishText": "Transformers were a pivotal moment in the development of art"
     },
     {
-      "wallMs": 6477.39999999851,
-      "prefillTokS": 276.434,
-      "decodeTokS": 20.1105,
+      "wallMs": 6667,
+      "prefillTokS": 355.6911,
+      "decodeTokS": 19.3858,
       "completionTokens": 127,
-      "promptTokens": 40,
+      "promptTokens": 35,
       "finishText": "Transformers were a pivotal moment in the development of art"
     },
     {
-      "wallMs": 6301,
-      "prefillTokS": 250.1563,
-      "decodeTokS": 20.734,
+      "wallMs": 6444.70000000298,
+      "prefillTokS": 334.9282,
+      "decodeTokS": 20.0778,
       "completionTokens": 127,
-      "promptTokens": 40,
+      "promptTokens": 35,
       "finishText": "Transformers were a pivotal moment in the development of art"
     },
     {
-      "wallMs": 6626.30000000447,
-      "prefillTokS": 254.7771,
-      "decodeTokS": 19.6826,
+      "wallMs": 6343,
+      "prefillTokS": 365.3445,
+      "decodeTokS": 20.3839,
       "completionTokens": 127,
-      "promptTokens": 40,
+      "promptTokens": 35,
       "finishText": "Transformers were a pivotal moment in the development of art"
     },
     {
-      "wallMs": 6430.89999999851,
-      "prefillTokS": 250,
-      "decodeTokS": 20.3021,
+      "wallMs": 6631.0999999940395,
+      "prefillTokS": 357.1429,
+      "decodeTokS": 19.4917,
       "completionTokens": 127,
-      "promptTokens": 40,
+      "promptTokens": 35,
       "finishText": "Transformers were a pivotal moment in the development of art"
     }
   ]
