@@ -1,0 +1,133 @@
+{
+  "device": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+  "label": "thinkpad-laptop",
+  "backend": "cpu",
+  "features": {
+    "cores": 8,
+    "memGB": 16,
+    "probeComputeMs": 0.6174999999988359,
+    "probeMemBandwidthGBs": 3.2263876923125077,
+    "gpu": {
+      "vendor": "intel",
+      "architecture": "gen-9",
+      "device": "",
+      "description": "",
+      "limits": {
+        "maxBufferSize": 4294967292,
+        "maxComputeWorkgroupStorageSize": 65536,
+        "maxComputeInvocationsPerWorkgroup": 256
+      }
+    }
+  },
+  "timestamp": "2026-06-15T17:30:54.785Z",
+  "results": [
+    {
+      "N": 128,
+      "variant": "numpy-ts.dot",
+      "iters": 302,
+      "median": 0.17251655629169912,
+      "p95": 0.41324503311273697,
+      "mean": 0.21533112582782996,
+      "min": 0.16920529801278245
+    },
+    {
+      "N": 128,
+      "variant": "handrolled-ijk",
+      "iters": 12,
+      "median": 4.808333333329453,
+      "p95": 4.908333333325572,
+      "mean": 4.8216666666674435,
+      "min": 4.7999999999883585
+    },
+    {
+      "N": 128,
+      "variant": "handrolled-ikj",
+      "iters": 10,
+      "median": 5.019999999995344,
+      "p95": 5.44000000001397,
+      "mean": 5.091999999999534,
+      "min": 4.969999999995343
+    },
+    {
+      "N": 256,
+      "variant": "numpy-ts.dot",
+      "iters": 40,
+      "median": 47.65249999999651,
+      "p95": 47.74500000000116,
+      "mean": 42.997000000000114,
+      "min": 1.2975000000034924
+    },
+    {
+      "N": 256,
+      "variant": "handrolled-ijk",
+      "iters": 2,
+      "median": 46,
+      "p95": 46.25,
+      "mean": 46.014999999990685,
+      "min": 45.84999999997672
+    },
+    {
+      "N": 256,
+      "variant": "handrolled-ikj",
+      "iters": 2,
+      "median": 40.15000000002328,
+      "p95": 40.449999999953434,
+      "mean": 40.009999999997675,
+      "min": 38.800000000046566
+    },
+    {
+      "N": 512,
+      "variant": "numpy-ts.dot",
+      "iters": 1,
+      "median": 378.89999999990687,
+      "p95": 380.39999999990687,
+      "mean": 378.67999999998136,
+      "min": 377
+    },
+    {
+      "N": 512,
+      "variant": "handrolled-ijk",
+      "iters": 1,
+      "median": 424,
+      "p95": 426.5999999998603,
+      "mean": 424.3,
+      "min": 423.10000000009313
+    },
+    {
+      "N": 512,
+      "variant": "handrolled-ikj",
+      "iters": 1,
+      "median": 310,
+      "p95": 311.60000000009313,
+      "mean": 310.15999999998604,
+      "min": 309.10000000009313
+    },
+    {
+      "N": 1024,
+      "variant": "numpy-ts.dot",
+      "iters": 1,
+      "median": 9708.200000000186,
+      "p95": 11899.299999999814,
+      "mean": 9848.130000000005,
+      "min": 7473.700000000186
+    },
+    {
+      "N": 1024,
+      "variant": "handrolled-ijk",
+      "iters": 1,
+      "median": 3457.399999999907,
+      "p95": 3541.7999999998137,
+      "mean": 3460.9100000000094,
+      "min": 3436
+    },
+    {
+      "N": 1024,
+      "variant": "handrolled-ikj",
+      "iters": 1,
+      "median": 2466.8000000000466,
+      "p95": 2470.100000000093,
+      "mean": 2467.320000000019,
+      "min": 2464.899999999907
+    }
+  ]
+}
