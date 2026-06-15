@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>webllm-bench</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: ui-monospace, "JetBrains Mono", "Fira Code", monospace;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #111;
+      color: #ddd;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    h1 {
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 16px;
+    }
+
+    .links {
+      display: flex;
+      gap: 8px;
+    }
+
+    a.btn {
+      font: inherit;
+      background: #222;
+      color: #ddd;
+      border: 1px solid #444;
+      padding: 6px 14px;
+      text-decoration: none;
+    }
+
+    a.btn:hover {
+      background: #2a2a2a;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>edge compute benchmarks</h1>
+
+  <div class="links">
+    <a class="btn" href="./gpu/gpu.html">GPU (WebLLM)</a>
+    <a class="btn" href="./cpu/cpu.html">CPU (matmul)</a>
+  </div>
+</body>
+
+</html>

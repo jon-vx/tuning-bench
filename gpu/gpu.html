@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>webllm-bench</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: ui-monospace, "JetBrains Mono", "Fira Code", monospace;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #111;
+      color: #ddd;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    h1 {
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 12px;
+    }
+
+    #controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    button {
+      font: inherit;
+      background: #222;
+      color: #ddd;
+      border: 1px solid #444;
+      padding: 6px 14px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    select,
+    input {
+      font: inherit;
+      background: #1a1a1a;
+      color: #ddd;
+      border: 1px solid #444;
+      padding: 5px 8px;
+    }
+
+    input[type="number"] {
+      width: 64px;
+    }
+
+    label {
+      color: #888;
+    }
+
+    nav {
+      margin-bottom: 12px;
+      color: #888;
+    }
+
+    nav a {
+      color: #8ab4f8;
+    }
+
+    #prompt {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 3em;
+      resize: vertical;
+      margin-bottom: 12px;
+    }
+
+    #status {
+      color: #8ab4f8;
+      min-height: 1.5em;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+    }
+
+    #summary {
+      border-collapse: collapse;
+      margin-bottom: 16px;
+    }
+
+    #summary td,
+    #summary th {
+      border: 1px solid #333;
+      padding: 4px 12px;
+      text-align: right;
+    }
+
+    #summary th {
+      color: #888;
+      font-weight: 500;
+    }
+
+    #log {
+      background: #0a0a0a;
+      border: 1px solid #333;
+      padding: 12px;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      max-height: 50vh;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>webllm-bench</h1>
+  <nav><a href="../cpu/cpu.html">CPU matmul benchmark</a></nav>
+
+  <div id="controls">
+    <select id="model-select"></select>
+    <label>warmup <input id="warmup" type="number" value="3" min="0" /></label>
+    <label>runs <input id="runs" type="number" value="10" min="1" /></label>
+    <label>max_tokens <input id="max-tokens" type="number" value="128" min="1" /></label>
+    <label>label <input id="label" type="text" placeholder="laptop-chrome" /></label>
+    <button id="load-btn">Load model</button>
+    <button id="run-btn" disabled>Run benchmark</button>
+    <button id="export-btn" disabled>Export JSON</button>
+    <button id="export-csv-btn" disabled>Export CSV</button>
+  </div>
+
+  <label for="prompt">prompt</label>
+  <textarea id="prompt" spellcheck="false"></textarea>
+
+  <div id="status">idle</div>
+
+  <table id="summary" hidden>
+    <thead>
+      <tr>
+        <th></th>
+        <th>prefill tok/s</th>
+        <th>decode tok/s</th>
+        <th>wall ms</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <pre id="log"></pre>
+
+  <script type="module" src="./gpu.js"></script>
+</body>
+
+</html>

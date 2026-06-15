@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cpu-bench</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: ui-monospace, "JetBrains Mono", "Fira Code", monospace;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #111;
+      color: #ddd;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    h1 {
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 12px;
+    }
+
+    nav {
+      margin-bottom: 12px;
+      color: #888;
+    }
+
+    nav a {
+      color: #8ab4f8;
+    }
+
+    #warning {
+      border: 1px solid #5a4a1a;
+      background: #1a1605;
+      color: #d8c36a;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+    }
+
+    #controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    button {
+      font: inherit;
+      background: #222;
+      color: #ddd;
+      border: 1px solid #444;
+      padding: 6px 14px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    label {
+      color: #888;
+    }
+
+    input {
+      font: inherit;
+      background: #1a1a1a;
+      color: #ddd;
+      border: 1px solid #444;
+      padding: 5px 8px;
+    }
+
+    #status {
+      color: #8ab4f8;
+      min-height: 1.5em;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+    }
+
+    #log {
+      background: #0a0a0a;
+      border: 1px solid #333;
+      padding: 12px;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      max-height: 60vh;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>cpu-bench: pure JS matmul baseline</h1>
+  <nav><a href="../gpu/gpu.html">WebLLM / WebGPU benchmark</a></nav>
+
+  <div id="warning">
+    Make sure DevTools is closed before running. An open console disables JIT
+    optimizations and skews the timings.
+  </div>
+
+  <div id="controls">
+    <label>label <input id="label" type="text" placeholder="laptop-chrome" /></label>
+    <button id="run-btn">Run CPU benchmark</button>
+    <button id="export-btn" disabled>Export JSON</button>
+    <button id="export-csv-btn" disabled>Export CSV</button>
+  </div>
+
+  <div id="status">idle</div>
+
+  <pre id="log"></pre>
+
+  <script type="module" src="./cpu.js"></script>
+</body>
+
+</html>
