@@ -1,15 +1,22 @@
-# Edge Compute Benchmarking Tool
+# WebLLM Runtime Tuning Bench
 
-Paired edge-compute benchmark for in-browser autotuning study.
+Browser benchmark and expirment bed for WebLLM and CPU tuning. 
 
-- **GPU half**: WebLLM inference on WebGPU (`gpu/gpu.html` + `gpu/gpu.js`).
-- **CPU half**: pure JS matmul baseline (`cpu/cpu.html` + `cpu/cpu.js`, `cpu/matmul.js`, `cpu/bench.js`).
+## Tools
 
-## Live (GitHub Pages)
+- [Automatic collector](gpu/collect.html)
+- [Controlled tuner](gpu/manual-tune.html)
+- [CPU benchmark](cpu/cpu.html)
 
-- Home: https://jon-vx.github.io/tuning-bench/
-- GPU benchmark: https://jon-vx.github.io/tuning-bench/gpu/gpu.html
-- CPU benchmark: https://jon-vx.github.io/tuning-bench/cpu/cpu.html
+The GPU pages need Chrome or Edge with WebGPU enabled. Nothing is uploaded automatically.
 
-Use Chrome or Edge for the GPU page (needs WebGPU).
+## Run locally
+
+Serve the repository over HTTP:
+
+```sh
+python3 -m http.server 8000
+```
+
+Then open `http://localhost:8000`.
 

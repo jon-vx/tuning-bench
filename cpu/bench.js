@@ -1,10 +1,4 @@
-// bench.js
-
-export const time = (fn) => {
-  const t0 = performance.now();
-  fn();
-  return performance.now() - t0;
-};
+import { quantile } from "../shared/benchmark-utils.js";
 
 export const timeBatched = (fn, iters) => {
   const t0 = performance.now();
@@ -28,34 +22,17 @@ export const calibrateIters = (fn, targetMs = 50, maxIters = 1e7) => {
 
 export const stats = (s) => {
   const sorted = [...s].sort((a, b) => a - b);
+  const median = quantile(s, 0.5);
+  const q1 = quantile(s, 0.25);
+  const q3 = quantile(s, 0.75);
   return {
-    median: sorted[Math.floor(sorted.length / 2)],
-    p95: sorted[Math.floor(sorted.length * 0.95)],
+    median,
+    q1,
+    q3,
+    iqr: q3 - q1,
+    iqrPct: median > 0 ? (q3 - q1) / median : null,
+    p95: quantile(s, 0.95),
     mean: s.reduce((a, b) => a + b) / s.length,
     min: sorted[0],
   };
 };
-
-const download = (text, name, type) => {
-  const blob = new Blob([text], { type });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  URL.revokeObjectURL(url);
-};
-
-export const downloadJSON = (obj, name = "bench.json") =>
-  download(JSON.stringify(obj, null, 2), name, "application/json");
-
-export const downloadCSV = (text, name = "bench.csv") =>
-  download(text, name, "text/csv");
-
-const csvCell = (v) => {
-  const s = v == null ? "" : String(v);
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-};
-
-export const toCsv = (header, rows) =>
-  [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");

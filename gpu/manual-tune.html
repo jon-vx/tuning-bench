@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controlled WebLLM experiment</title>
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <style>
+    main { max-width: 1180px; }
+    h1 { margin: 0 0 4px; font-size: 17px; }
+    p { max-width: 900px; margin: 4px 0 16px; color: var(--muted); }
+    nav { margin-bottom: 18px; }
+    fieldset { margin: 0 0 14px; padding: 14px; background: var(--panel); }
+    legend { color: var(--blue); padding: 0 7px; }
+    .controls { gap: 11px; }
+    label { display: grid; gap: 4px; color: var(--muted); }
+    input[type="number"] { width: 86px; }
+    input[type="text"] { width: 290px; }
+    .definition { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin-top: 13px; }
+    .definition div { border: 1px solid var(--line); padding: 9px; }
+    .definition strong { display: block; color: var(--muted); font-weight: normal; }
+    .definition span { color: var(--accent); }
+    #status { color: var(--blue); min-height: 1.5em; margin: 11px 0 5px; }
+    .progress { width: min(760px, 100%); height: 8px; border: 1px solid var(--line); background: #090a08; }
+    #progress-fill { height: 100%; width: 0; background: var(--accent); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; margin: 14px 0 18px; white-space: nowrap; }
+    th, td { text-align: right; }
+    th:first-child, td:first-child { text-align: left; }
+    tr.candidate { color: var(--accent); }
+    tr.rejected td:last-child { color: var(--bad); }
+    #plots { margin: 18px 0; }
+    #plots h2 { margin: 0 0 10px; font-size: 14px; font-weight: normal; color: var(--blue); }
+    #plot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+    .plot-card { margin: 0; border: 1px solid var(--line); background: #090a08; padding: 9px; }
+    .plot-card figcaption { color: var(--muted); margin-bottom: 5px; }
+    .plot-card svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .plot-axis { stroke: #596050; stroke-width: 1; }
+    .plot-line { fill: none; stroke: var(--accent); stroke-width: 2; }
+    .plot-point { fill: var(--accent); }
+    .plot-label { fill: var(--muted); font: 10px ui-monospace, monospace; }
+    pre { max-height: 42vh; }
+    @media (max-width: 640px) { input[type="text"] { width: 100%; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Controlled WebLLM experiment</h1>
+    <nav><a href="./collect.html">automatic collector</a></nav>
+    <p>Fix one device, model, and task. Change one runtime parameter while every other controlled setting stays locked.</p>
+
+    <fieldset>
+      <legend>Experiment definition</legend>
+      <div class="controls">
+        <label>label<input id="label" type="text" /></label>
+        <label>fixed model<select id="model"></select></label>
+        <label>fixed task<select id="task"></select></label>
+        <label>one variable<select id="parameter"></select></label>
+        <label id="selector-budget-control" hidden>selector history budget<input id="selector-budget" type="number" min="1" value="320" /></label>
+        <label>blocks<input id="blocks" type="number" min="1" max="12" value="4" /></label>
+        <label>warmups<input id="warmups" type="number" min="0" max="3" value="1" /></label>
+        <label><span>reference</span><span><input id="include-library" type="checkbox" /> untouched WebLLM</span></label>
+        <label>latency target<input id="latency-target" type="number" min="250" value="10000" /></label>
+      </div>
+      <div class="definition">
+        <div><strong>values under test</strong><span id="values"></span></div>
+        <div><strong>locked settings</strong><span id="locked-settings"></span></div>
+        <div><strong>workload</strong><span id="workload"></span></div>
+        <div><strong>decision rule</strong><span id="decision-rule"></span></div>
+      </div>
+    </fieldset>
+
+    <div class="controls">
+      <button id="run-experiment">Run controlled experiment</button>
+      <button id="export-json" disabled>Export JSON</button>
+      <button id="export-csv" disabled>Export CSV</button>
+    </div>
+    <div id="status">idle</div>
+    <div id="experiment-progress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div id="progress-fill"></div>
+    </div>
+
+    <div class="table-wrap">
+      <table id="results" hidden>
+        <thead>
+          <tr>
+            <th>configuration</th><th>value</th><th>runs</th><th>prompt tok</th>
+            <th>TTFT ms</th><th id="matched-delta-heading">matched delta</th><th id="repeatability-heading">repeat IQR</th><th>wall ms</th>
+            <th>wall delta</th><th>quality</th><th>clean</th><th>retention</th>
+            <th>truncated</th><th>status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <section id="plots" hidden>
+      <h2>History dose response</h2>
+      <div id="plot-grid"></div>
+    </section>
+    <pre id="log"></pre>
+  </main>
+  <script type="module" src="./manual-tune.js"></script>
+</body>
+</html>

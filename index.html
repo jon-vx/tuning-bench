@@ -5,54 +5,95 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>webllm-bench</title>
+  <link rel="stylesheet" href="./shared/styles.css" />
   <style>
-    :root {
-      color-scheme: dark;
-      font-family: ui-monospace, "JetBrains Mono", "Fira Code", monospace;
-    }
-
     body {
-      margin: 0;
-      padding: 24px;
-      background: #111;
-      color: #ddd;
-      font-size: 13px;
-      line-height: 1.5;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
     }
 
-    h1 {
-      font-size: 14px;
-      font-weight: 600;
-      margin: 0 0 16px;
+    main {
+      width: min(760px, 100%);
+      text-align: center;
     }
 
-    .links {
-      display: flex;
-      gap: 8px;
+    .ascii {
+      display: block;
+      width: fit-content;
+      max-width: 100%;
+      margin: 0 auto 22px;
+      color: var(--text);
+      font: inherit;
+      line-height: 1.1;
+      text-align: left;
+      white-space: pre;
+      overflow-x: auto;
     }
 
     a.btn {
-      font: inherit;
-      background: #222;
-      color: #ddd;
-      border: 1px solid #444;
-      padding: 6px 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 18px;
       text-decoration: none;
+      margin-bottom: 18px;
     }
 
     a.btn:hover {
-      background: #2a2a2a;
+      background: #252820;
+    }
+
+    .steps {
+      width: min(520px, 100%);
+      margin: 0 auto;
+      padding: 0;
+      color: var(--muted);
+      text-align: center;
+      list-style: none;
+    }
+
+    .steps li {
+      margin: 4px 0;
+    }
+
+    .research-tools {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 560px) {
+      .ascii {
+        font-size: 11px;
+      }
     }
   </style>
 </head>
 
 <body>
-  <h1>edge compute benchmarks</h1>
+  <main>
+    <pre class="ascii" aria-label="webllm bench ascii wordmark">▗▖ ▗▖▗▄▄▄▖▗▄▄▖     ▗▖   ▗▖   ▗▖  ▗▖    ▗▄▄▖ ▗▄▄▄▖▗▖  ▗▖ ▗▄▄▖▗▖ ▗▖
+▐▌ ▐▌▐▌   ▐▌ ▐▌    ▐▌   ▐▌   ▐▛▚▞▜▌    ▐▌ ▐▌▐▌   ▐▛▚▖▐▌▐▌   ▐▌ ▐▌
+▐▌ ▐▌▐▛▀▀▘▐▛▀▚▖    ▐▌   ▐▌   ▐▌  ▐▌    ▐▛▀▚▖▐▛▀▀▘▐▌ ▝▜▌▐▌   ▐▛▀▜▌
+▐▙█▟▌▐▙▄▄▖▐▙▄▞▘    ▐▙▄▄▖▐▙▄▄▖▐▌  ▐▌    ▐▙▄▞▘▐▙▄▄▖▐▌  ▐▌▝▚▄▄▖▐▌ ▐▌</pre>
 
-  <div class="links">
-    <a class="btn" href="./gpu/gpu.html">GPU (WebLLM)</a>
-    <a class="btn" href="./cpu/cpu.html">CPU (matmul)</a>
-  </div>
+    <a class="btn" href="./gpu/collect.html">start</a>
+
+    <ul class="steps">
+      <li>1. Open the app.</li>
+      <li>2. Press start collection.</li>
+      <li>3. Keep the tab open until it says done.</li>
+      <li>4. Click export JSON + CSV.</li>
+      <li>5. Send both files to jonvx0@gmail.com.</li>
+    </ul>
+
+    <nav class="research-tools" aria-label="research tools">
+      <a href="./gpu/manual-tune.html">controlled tuner</a>
+      <a href="./cpu/cpu.html">CPU kernels</a>
+    </nav>
+  </main>
 </body>
 
 </html>

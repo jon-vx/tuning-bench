@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>webllm data collector</title>
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <style>
+    #disclaimer {
+      max-width: 860px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      color: var(--text);
+    }
+
+    #disclaimer strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    #disclaimer p {
+      margin: 0 0 6px;
+    }
+
+    #disclaimer p:last-child {
+      margin-bottom: 0;
+      color: var(--muted);
+    }
+
+    #model-picker {
+      border: 1px solid var(--line);
+      padding: 5px 8px;
+      margin: 0;
+    }
+
+    #model-picker legend {
+      color: var(--muted);
+      padding: 0 4px;
+    }
+
+    #model-options {
+      display: grid;
+      gap: 3px;
+    }
+
+    #model-options label {
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    #matrix-size {
+      color: var(--muted);
+    }
+
+    #progress-wrap {
+      max-width: 860px;
+      margin-bottom: 14px;
+    }
+
+    #progress-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 5px;
+      color: var(--muted);
+    }
+
+    #progress-track {
+      height: 10px;
+      border: 1px solid var(--line);
+      background: #090a08;
+      overflow: hidden;
+    }
+
+    #progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--blue);
+      transition: width 160ms linear;
+    }
+
+    #steps {
+      border-collapse: collapse;
+      margin-bottom: 16px;
+      min-width: 360px;
+    }
+
+    #steps td,
+    #steps th {
+      border: 1px solid var(--line);
+      padding: 5px 10px;
+    }
+
+    #steps th {
+      color: var(--muted);
+      font-weight: 500;
+      text-align: left;
+    }
+
+    #log { max-height: 42vh; }
+  </style>
+</head>
+
+<body>
+  <h1>webllm data collector</h1>
+  <nav>
+    <a href="./manual-tune.html">fixed-model manual tuner</a>
+  </nav>
+
+  <section id="disclaimer" aria-label="data collection disclosure">
+    <p><strong>What this collects:</strong> browser user agent, CPU core and memory hints, WebGPU adapter details, GPU features and limits, synthetic WebGPU probe timings, fixed-model WebLLM policy timings, task-check scores, token counts, errors, fixed benchmark prompts, and the optional label you enter.</p>
+    <p>No personal files, browsing history, account data, or free-form chat messages are read. Data is not uploaded automatically; export creates local JSON and CSV files that you choose whether to send.</p>
+  </section>
+
+  <div id="controls">
+    <label>label <input id="label" type="text" /></label>
+    <fieldset id="model-picker">
+      <legend>models</legend>
+      <div id="model-options"></div>
+    </fieldset>
+    <label>budget <select id="latency-budget"></select></label>
+    <label>workflow
+      <select id="workflow">
+        <option value="baseline-validation">Validate baselines</option>
+        <option value="focused-history">Focused history validation</option>
+        <option value="exploratory-matrix">Exploratory 8-policy matrix</option>
+      </select>
+    </label>
+    <button id="start-btn">Start collection</button>
+    <button id="export-btn" disabled>Export JSON + CSV</button>
+    <span id="matrix-size"></span>
+    <span id="export-note">Please send the JSON and CSV files to jonvx0@gmail.com</span>
+  </div>
+
+  <div id="status">idle</div>
+
+  <div id="progress-wrap" role="group" aria-label="collection progress">
+    <div id="progress-label">
+      <span id="progress-phase">waiting to start</span>
+      <span id="progress-percent">0%</span>
+    </div>
+    <div id="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div id="progress-fill"></div>
+    </div>
+  </div>
+
+  <table id="steps">
+    <thead>
+      <tr>
+        <th>step</th>
+        <th>status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Device profile</td><td id="step-profile">waiting</td></tr>
+      <tr><td>WebGPU probe</td><td id="step-probe">waiting</td></tr>
+      <tr><td>Baseline qualification</td><td id="step-baseline">waiting</td></tr>
+      <tr><td>Model/task matrix</td><td id="step-chat">waiting</td></tr>
+      <tr><td>Export package</td><td id="step-export">waiting</td></tr>
+    </tbody>
+  </table>
+
+  <pre id="log"></pre>
+
+  <script type="module" src="./collect.js"></script>
+</body>
+
+</html>
