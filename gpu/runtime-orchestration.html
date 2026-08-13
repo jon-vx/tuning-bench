@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Runtime orchestration</title>
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <style>
+    main { max-width: 1180px; }
+    h1 { font-size: 19px; margin-bottom: 4px; }
+    h2 { font-size: 15px; color: var(--blue); }
+    p { max-width: 940px; color: var(--muted); }
+    fieldset { margin: 14px 0; padding: 14px; background: var(--panel); }
+    legend { color: var(--blue); padding: 0 7px; }
+    label { display: grid; gap: 4px; color: var(--muted); }
+    .checks label { display: flex; align-items: center; gap: 7px; }
+    input[type="number"] { width: 78px; }
+    .notice { border-left: 3px solid var(--blue); padding: 8px 11px; }
+    #status { min-height: 1.5em; color: var(--blue); }
+    progress { width: min(760px, 100%); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; margin-top: 14px; white-space: nowrap; }
+    th, td { text-align: right; }
+    th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+    .pass { color: var(--accent); }
+    .fail { color: var(--bad); }
+    pre { max-height: 36vh; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Runtime orchestration</h1>
+    <nav><a class="menu-button" href="../index.html">Back to menu</a></nav>
+
+    <p class="notice">Local generated bundle required. From the repository root run <code>node scripts/build-runtime-orchestration.mjs</code>, then serve the repository over HTTP.</p>
+
+    <fieldset>
+      <legend>Fixed experiment</legend>
+      <div class="controls">
+        <label>campaign ID<input id="campaign-id" type="text" value="runtime-orchestration-manual" /></label>
+        <label>model<select id="model"></select></label>
+        <label>paired repetitions<input id="repetitions" type="number" min="1" max="30" value="10" /></label>
+        <label>warmups per policy<input id="warmups" type="number" min="0" max="3" value="1" /></label>
+      </div>
+      <div class="controls checks" id="policy-controls"></div>
+      <div class="controls checks" id="workload-controls"></div>
+    </fieldset>
+
+    <div class="controls">
+      <button id="run">Run paired screen</button>
+      <button id="export" disabled>Export JSON</button>
+    </div>
+    <p id="status">idle</p>
+    <progress id="progress" max="1" value="0"></progress>
+
+    <section>
+      <h2>Summary</h2>
+      <div class="table-wrap">
+        <table id="summary" hidden>
+          <thead><tr>
+            <th>workload</th><th>policy</th><th>runs</th><th>TTFT ms</th><th>TTFT Δ</th>
+            <th>wall ms</th><th>wall Δ</th><th>median gap</th><th>p95 gap</th>
+            <th>submits</th><th>dispatches</th><th>output</th><th>trace</th><th>screen status</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+    <pre id="log"></pre>
+  </main>
+  <script type="module" src="./runtime-orchestration.js"></script>
+</body>
+</html>

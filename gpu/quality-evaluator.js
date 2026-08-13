@@ -153,6 +153,9 @@ async function testGeneratedCode(output, functionName, testId) {
 export async function evaluateTaskOutput(taskProfile, output) {
   const quality = taskProfile.quality ?? {};
   if (!output.trim()) return { score: 0, passed: false, detail: "empty_output" };
+  if (quality.latencyOnly) {
+    return { score: 1, passed: true, detail: "generation_observed" };
+  }
 
   if (quality.codeFunctionName) {
     const test = await testGeneratedCode(output, quality.codeFunctionName, quality.codeTestId);

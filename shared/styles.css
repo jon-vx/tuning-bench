@@ -28,6 +28,17 @@ nav { margin-bottom: 16px; color: var(--muted); }
 a { color: var(--blue); }
 p { color: var(--muted); }
 
+.menu-button {
+  display: inline-block;
+  padding: 6px 10px;
+  color: var(--text);
+  background: #1d201a;
+  border: 1px solid #454b3e;
+  text-decoration: none;
+}
+
+.menu-button:hover { border-color: var(--accent); }
+
 .controls, #controls {
   display: flex;
   gap: 9px;

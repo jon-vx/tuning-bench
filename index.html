@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>webllm-bench</title>
+  <title>Tuning Bench</title>
   <link rel="stylesheet" href="./shared/styles.css" />
   <style>
     body {
@@ -31,42 +31,67 @@
       overflow-x: auto;
     }
 
-    a.btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 18px;
-      text-decoration: none;
-      margin-bottom: 18px;
-    }
-
-    a.btn:hover {
-      background: #252820;
-    }
-
-    .steps {
-      width: min(520px, 100%);
-      margin: 0 auto;
-      padding: 0;
-      color: var(--muted);
-      text-align: center;
-      list-style: none;
-    }
-
-    .steps li {
-      margin: 4px 0;
-    }
-
     .research-tools {
-      display: flex;
-      justify-content: center;
-      gap: 16px;
-      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: min(520px, 100%);
+      gap: 10px;
+      margin: 24px auto 16px;
+    }
+
+    .research-tools a {
+      position: relative;
+      padding: 9px 14px 9px 30px;
+      color: var(--text);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 3px 3px 0 #090a08;
+      text-align: left;
+      text-decoration: none;
+      text-transform: lowercase;
+      transition: color 120ms ease, border-color 120ms ease, background 120ms ease,
+        transform 120ms ease, box-shadow 120ms ease;
+    }
+
+    .research-tools a::before {
+      position: absolute;
+      left: 12px;
+      color: var(--accent);
+      content: ">";
+    }
+
+    .research-tools a:hover,
+    .research-tools a:focus-visible {
+      color: var(--bg);
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 1px 1px 0 #090a08;
+      outline: none;
+      transform: translate(2px, 2px);
+    }
+
+    .research-tools a:hover::before,
+    .research-tools a:focus-visible::before {
+      color: var(--bg);
     }
 
     @media (max-width: 560px) {
       .ascii {
         font-size: 11px;
+      }
+
+      .research-tools a {
+        width: 100%;
+      }
+
+      .research-tools {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .research-tools a {
+        transition: none;
       }
     }
   </style>
@@ -74,23 +99,17 @@
 
 <body>
   <main>
-    <pre class="ascii" aria-label="webllm bench ascii wordmark">▗▖ ▗▖▗▄▄▄▖▗▄▄▖     ▗▖   ▗▖   ▗▖  ▗▖    ▗▄▄▖ ▗▄▄▄▖▗▖  ▗▖ ▗▄▄▖▗▖ ▗▖
-▐▌ ▐▌▐▌   ▐▌ ▐▌    ▐▌   ▐▌   ▐▛▚▞▜▌    ▐▌ ▐▌▐▌   ▐▛▚▖▐▌▐▌   ▐▌ ▐▌
-▐▌ ▐▌▐▛▀▀▘▐▛▀▚▖    ▐▌   ▐▌   ▐▌  ▐▌    ▐▛▀▚▖▐▛▀▀▘▐▌ ▝▜▌▐▌   ▐▛▀▜▌
-▐▙█▟▌▐▙▄▄▖▐▙▄▞▘    ▐▙▄▄▖▐▙▄▄▖▐▌  ▐▌    ▐▙▄▞▘▐▙▄▄▖▐▌  ▐▌▝▚▄▄▖▐▌ ▐▌</pre>
-
-    <a class="btn" href="./gpu/collect.html">start</a>
-
-    <ul class="steps">
-      <li>1. Open the app.</li>
-      <li>2. Press start collection.</li>
-      <li>3. Keep the tab open until it says done.</li>
-      <li>4. Click export JSON + CSV.</li>
-      <li>5. Send both files to jonvx0@gmail.com.</li>
-    </ul>
+    <pre class="ascii" aria-label="Tuning Bench wordmark">___________           .__                 __________                     .__
+\__    ___/_ __  ____ |__| ____    ____   \______   \ ____   ____   ____ |  |__
+  |    | |  |  \/    \|  |/    \  / ___\   |    |  _// __ \ /    \_/ ___\|  |  \
+  |    | |  |  /   |  \  |   |  \/ /_/  &gt;  |    |   \  ___/|   |  \  \___|   Y  \
+  |____| |____/|___|  /__|___|  /\___  /   |______  /\___  &gt;___|  /\___  &gt;___|  /
+                    \/        \//_____/           \/     \/     \/     \/     \/</pre>
 
     <nav class="research-tools" aria-label="research tools">
+      <a href="./gpu/collect.html">automatic collector</a>
       <a href="./gpu/manual-tune.html">controlled tuner</a>
+      <a href="./gpu/runtime-orchestration.html">runtime orchestration</a>
       <a href="./cpu/cpu.html">CPU kernels</a>
     </nav>
   </main>

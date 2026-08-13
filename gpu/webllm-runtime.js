@@ -12,8 +12,10 @@ export async function loadWebLlmModel(modelId, policy, reportStatus) {
   const penaltyKey = policy.penaltyProcessingMode ?? "default-penalties";
   const kvCacheKey = policy.kvCacheMode ?? "default-kv";
   const slidingKey = policy.slidingWindowSize ?? "default-sliding";
+  const sinkKey = policy.attentionSinkSize ?? "default-sink";
   const threadKey = policy.engineThreadMode ?? "main";
-  const engineKey = `${modelId}:${contextKey}:${penaltyKey}:${kvCacheKey}:${slidingKey}:${threadKey}`;
+  const engineKey =
+    `${modelId}:${contextKey}:${penaltyKey}:${kvCacheKey}:${slidingKey}:${sinkKey}:${threadKey}`;
 
   if (engine && loadedEngineKey === engineKey) {
     return { loadMs: 0, engineCacheState: "already_loaded" };
@@ -29,11 +31,11 @@ export async function loadWebLlmModel(modelId, policy, reportStatus) {
   if (policy.slidingWindowSize != null) {
     chatOptions.context_window_size = -1;
     chatOptions.sliding_window_size = policy.slidingWindowSize;
-    chatOptions.attention_sink_size = 0;
+    chatOptions.attention_sink_size = policy.attentionSinkSize ?? 0;
   } else if (policy.kvCacheMode === "sliding") {
     chatOptions.context_window_size = -1;
     chatOptions.sliding_window_size = 4096;
-    chatOptions.attention_sink_size = 0;
+    chatOptions.attention_sink_size = policy.attentionSinkSize ?? 0;
   } else if (policy.contextWindowSize != null) {
     chatOptions.context_window_size = policy.contextWindowSize;
   }
@@ -78,12 +80,17 @@ export async function completeWithWebLlm(messages, policy, timeoutMs, onFirstTok
   let finishReason = "";
   let timeout;
 
-  const request = {
-    messages,
-    stream: policy.responseDeliveryMode !== "non-streaming",
-  };
+  const request = { messages };
+  if (!policy.useLibraryGenerationDefaults) {
+    request.stream = policy.responseDeliveryMode !== "non-streaming";
+  }
   if (request.stream) request.stream_options = { include_usage: true };
   if (policy.maxTokens != null) request.max_tokens = policy.maxTokens;
+  if (policy.logprobsMode === "on") request.logprobs = true;
+  if (policy.topLogprobs != null) request.top_logprobs = policy.topLogprobs;
+  if (policy.responseFormatMode === "json-object") {
+    request.response_format = { type: "json_object" };
+  }
   if (!policy.useLibraryGenerationDefaults) {
     request.temperature = policy.temperature;
     request.top_p = policy.topP;

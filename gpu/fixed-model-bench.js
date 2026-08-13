@@ -1,5 +1,9 @@
 import { getWebGpuProfile } from "./device-profile.js";
-import { FIXED_MODELS, parseQuantization } from "./models.js";
+import {
+  FIXED_MODELS,
+  parseQuantization,
+  resolveModelArtifact,
+} from "./models.js";
 import { evaluateTaskOutput } from "./quality-evaluator.js";
 import { chooseRecommendedPolicy } from "./recommendation.js";
 import { getTaskCase, getTaskProfile } from "./task-profiles.js";
@@ -185,10 +189,13 @@ function basePolicyFields({
     requestedSeed: policy.useLibraryGenerationDefaults ? null : policy.seed,
     conversationCacheMode: policy.conversationCacheMode ?? "",
     penaltyProcessingMode: policy.penaltyProcessingMode ?? "",
-    responseDeliveryMode: policy.responseDeliveryMode ?? "streaming",
+    responseDeliveryMode: policy.useLibraryGenerationDefaults
+      ? "library-default"
+      : policy.responseDeliveryMode ?? "streaming",
     kvCacheMode: policy.kvCacheMode ?? "context",
     slidingWindowSize: policy.slidingWindowSize ?? null,
     engineThreadMode: policy.engineThreadMode ?? "main",
+    topLogprobs: policy.topLogprobs ?? null,
   };
 }
 
@@ -247,8 +254,10 @@ async function runInference({
   const wallMs = performance.now() - start;
   const stats = await readWebLlmStats();
   const quality = await evaluateTaskOutput(taskCase, output);
-  const outputTruncated = finishReason === "length";
-  const outputComplete = finishReason === "stop";
+  const outputLimitReached = finishReason === "length";
+  const latencyOnly = taskProfile.taskType === "latency-only";
+  const outputTruncated = outputLimitReached && !latencyOnly;
+  const outputComplete = finishReason === "stop" || (latencyOnly && outputLimitReached);
   const promptTokens = usage.prompt_tokens ?? null;
   const completionTokens = usage.completion_tokens ?? null;
   const tokenMetrics = { ...built };
@@ -289,6 +298,7 @@ async function runInference({
     latencyTargetMs,
     latencyTargetMet: wallMs <= latencyTargetMs,
     finishReason,
+    outputLimitReached,
     outputTruncated,
     outputComplete,
     outputChars: output.length,
@@ -345,6 +355,7 @@ function failureRow({
     decodeTokS: null,
     latencyTargetMs,
     latencyTargetMet: false,
+    outputLimitReached: false,
     outputTruncated: false,
     outputComplete: false,
     qualityScore: 0,
@@ -501,6 +512,7 @@ function runVariant({
   runKind,
   longHistoryScenario,
   measuredConversationScenarios,
+  measuredScenarioOrder,
 }) {
   if (runKind === "warmup") {
     return {
@@ -512,11 +524,15 @@ function runVariant({
   const scenarios = measuredConversationScenarios?.length
     ? measuredConversationScenarios
     : ["single-turn", longHistoryScenario];
-  const conversationScenario = scenarios[
-    Math.floor((runIndex - 1) / caseCount) % scenarios.length
-  ];
+  const scenarioIndex = measuredScenarioOrder === "scenarios-first"
+    ? (runIndex - 1) % scenarios.length
+    : Math.floor((runIndex - 1) / caseCount) % scenarios.length;
+  const taskCaseIndex = measuredScenarioOrder === "scenarios-first"
+    ? Math.floor((runIndex - 1) / scenarios.length)
+    : runIndex - 1;
+  const conversationScenario = scenarios[scenarioIndex];
   const taskCase = materializeTaskCase(
-    getTaskCase(taskProfile, runIndex - 1),
+    getTaskCase(taskProfile, taskCaseIndex),
     conversationScenario
   );
   return {
@@ -535,6 +551,7 @@ async function runPolicyPhase({
   runCount,
   longHistoryScenario,
   measuredConversationScenarios,
+  measuredScenarioOrder,
   latencyTargetMs,
   timeoutMs,
   results,
@@ -549,6 +566,7 @@ async function runPolicyPhase({
       runKind,
       longHistoryScenario,
       measuredConversationScenarios,
+      measuredScenarioOrder,
     });
     const built = buildPolicyMessages(
       taskProfile,
@@ -575,27 +593,38 @@ async function runPolicyPhase({
       });
       if (runKind === "measured") {
         results.push(row);
+        const ttft = Number.isFinite(row.timeToFirstTokenMs)
+          ? `${row.timeToFirstTokenMs.toFixed(0)}ms`
+          : "n/a";
+        const wall = Number.isFinite(row.wallMs)
+          ? `${row.wallMs.toFixed(0)}ms`
+          : "n/a";
+        const quality = Number.isFinite(row.qualityScore)
+          ? row.qualityScore.toFixed(2)
+          : "n/a";
         logFn(
-          `${policy.id} ${index}/${runCount}: TTFT ${row.timeToFirstTokenMs?.toFixed(0)}ms, ` +
-          `wall ${row.wallMs.toFixed(0)}ms, quality ${row.qualityScore.toFixed(2)} ` +
+          `${policy.id} ${index}/${runCount}: TTFT ${ttft}, ` +
+          `wall ${wall}, quality ${quality} ` +
           `(${row.qualityDetail})`
         );
       }
     } catch (error) {
-      results.push(failureRow({
-        model,
-        taskProfile,
-        taskCase: variant.taskCase,
-        policy,
-        executionIndex,
-        conversationScenario: variant.conversationScenario,
-        runKind,
-        runIndex: index,
-        loadInfo,
-        error,
-        stage: runKind === "warmup" ? "warmup" : "inference",
-        latencyTargetMs,
-      }));
+      if (runKind === "measured") {
+        results.push(failureRow({
+          model,
+          taskProfile,
+          taskCase: variant.taskCase,
+          policy,
+          executionIndex,
+          conversationScenario: variant.conversationScenario,
+          runKind,
+          runIndex: index,
+          loadInfo,
+          error,
+          stage: "inference",
+          latencyTargetMs,
+        }));
+      }
       logFn(`ERROR ${policy.id} ${runKind} ${index}/${runCount}: ${error.stack || error}`);
     }
     progressFn({ event: runKind, policyId: policy.id, run: index });
@@ -604,6 +633,7 @@ async function runPolicyPhase({
 
 export async function runFixedModelPoliciesCore({
   modelConfigId,
+  modelArtifactId = "",
   taskProfileId,
   latencyTargetMs = 5000,
   policies = TUNING_POLICIES,
@@ -616,14 +646,16 @@ export async function runFixedModelPoliciesCore({
   deviceProfile = null,
   longHistoryScenario = "long-history-distraction",
   measuredConversationScenarios = null,
+  measuredScenarioOrder = "cases-first",
   logFn = () => {},
   statusFn = () => {},
   progressFn = () => {},
 } = {}) {
   const availableModels = getAvailableFixedModels();
-  const model = availableModels.find((candidate) => candidate.id === modelConfigId)
+  const configuredModel = availableModels.find((candidate) => candidate.id === modelConfigId)
     ?? availableModels[0];
-  if (!model) throw new Error("no configured fixed model is available");
+  if (!configuredModel) throw new Error("no configured fixed model is available");
+  const model = resolveModelArtifact(configuredModel.id, modelArtifactId);
   const taskProfile = getTaskProfile(taskProfileId);
   const resolvedPolicies = resolvePolicies(taskProfile, policies);
   const executionPolicies = orderPolicies(resolvedPolicies, randomizeOrder, shuffleSeed);
@@ -638,7 +670,8 @@ export async function runFixedModelPoliciesCore({
       logFn(`${policy.id}: model ready in ${loadInfo.loadMs.toFixed(0)}ms`);
       const common = {
         model, taskProfile, policy, executionIndex, loadInfo, longHistoryScenario,
-        measuredConversationScenarios, latencyTargetMs, timeoutMs, results,
+        measuredConversationScenarios, measuredScenarioOrder, latencyTargetMs,
+        timeoutMs, results,
         logFn, statusFn, progressFn,
       };
       await runPolicyPhase({ ...common, runKind: "warmup", runCount: warmup });
@@ -689,6 +722,7 @@ export async function runFixedModelPoliciesCore({
       conversationScenarios: measuredConversationScenarios?.length
         ? measuredConversationScenarios
         : ["single-turn", longHistoryScenario],
+      measuredScenarioOrder,
       policyOrderStrategy: randomizeOrder ? "context_grouped_balanced_rotation" : "provided_order",
       shuffleSeed,
       policyExecutionOrder: executionPolicies.map((policy) => policy.id),

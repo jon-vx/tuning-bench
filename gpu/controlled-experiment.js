@@ -9,6 +9,7 @@ import {
 export const EXPERIMENT_DEFINITIONS = [
   {
     id: "historyTokenBudget",
+    scope: "application",
     label: "History budget",
     values: [128, 256, 384, 512],
     controlledValue: 512,
@@ -17,6 +18,7 @@ export const EXPERIMENT_DEFINITIONS = [
   },
   {
     id: "relevanceHistoryBudget",
+    scope: "application",
     label: "Relevance history budget",
     values: [64, 96, 128, 192],
     controlledValue: 128,
@@ -27,6 +29,7 @@ export const EXPERIMENT_DEFINITIONS = [
   },
   {
     id: "distractionHistoryBudget",
+    scope: "application",
     label: "Distraction history",
     values: [128, 256, 384, 512],
     controlledValue: 512,
@@ -36,6 +39,8 @@ export const EXPERIMENT_DEFINITIONS = [
   },
   {
     id: "maxTokens",
+    scope: "webllm-setting",
+    webLlmProperty: "max_tokens",
     label: "Output limit",
     values: [128, 192, 256],
     controlledValue: 256,
@@ -44,14 +49,17 @@ export const EXPERIMENT_DEFINITIONS = [
   },
   {
     id: "contextWindowSize",
+    scope: "webllm-setting",
+    webLlmProperty: "context_window_size",
     label: "Context window",
-    values: [1024, 2048, 4096],
+    values: [1024, 1536, 2048, 3072, 4096],
     controlledValue: 4096,
     objectiveMetric: "ttft",
     workload: { measuredRuns: 3, scenarios: ["long-history-required"], warmupEach: true },
   },
   {
     id: "promptTemplateId",
+    scope: "application",
     label: "Prompt format",
     values: ["full", "compact"],
     controlledValue: "full",
@@ -60,6 +68,7 @@ export const EXPERIMENT_DEFINITIONS = [
   },
   {
     id: "historySelectionPolicy",
+    scope: "application",
     label: "History selector",
     values: ["tail", "relevance"],
     controlledValue: "tail",
@@ -69,6 +78,7 @@ export const EXPERIMENT_DEFINITIONS = [
   },
   {
     id: "historyConfiguration",
+    scope: "application",
     label: "History configuration",
     values: ["512-tail", "128-relevance"],
     controlledValue: "512-tail",
@@ -81,6 +91,7 @@ export const EXPERIMENT_DEFINITIONS = [
   },
   {
     id: "adaptiveHistoryPolicy",
+    scope: "application",
     label: "Adaptive history policy",
     values: ["512-tail", "96-relevance"],
     controlledValue: "512-tail",
@@ -96,6 +107,7 @@ export const EXPERIMENT_DEFINITIONS = [
   },
   {
     id: "conversationCacheMode",
+    scope: "webllm-operation",
     label: "Conversation prefix cache",
     values: ["full-prefill", "prefix-reuse"],
     controlledValue: "full-prefill",
@@ -105,6 +117,8 @@ export const EXPERIMENT_DEFINITIONS = [
   },
   {
     id: "penaltyProcessingMode",
+    scope: "webllm-setting",
+    webLlmProperty: "frequency_penalty, presence_penalty",
     label: "Zero-penalty processing",
     values: ["explicit-zero", "bypass-zero"],
     controlledValue: "explicit-zero",
@@ -114,6 +128,8 @@ export const EXPERIMENT_DEFINITIONS = [
   },
   {
     id: "responseDeliveryMode",
+    scope: "webllm-setting",
+    webLlmProperty: "stream",
     label: "Response delivery",
     values: ["streaming", "non-streaming"],
     controlledValue: "streaming",
@@ -123,6 +139,8 @@ export const EXPERIMENT_DEFINITIONS = [
   },
   {
     id: "kvCacheMode",
+    scope: "webllm-setting",
+    webLlmProperty: "context_window_size, sliding_window_size",
     label: "KV cache mode at 4096 tokens",
     values: ["context", "sliding"],
     controlledValue: "context",
@@ -137,8 +155,10 @@ export const EXPERIMENT_DEFINITIONS = [
   },
   {
     id: "slidingWindowSize",
+    scope: "webllm-setting",
+    webLlmProperty: "sliding_window_size",
     label: "Sliding-window size",
-    values: [4096, 3072],
+    values: [4096, 3072, 2048, 1024],
     controlledValue: 4096,
     objectiveMetric: "wall",
     baseOverrides: {
@@ -152,12 +172,139 @@ export const EXPERIMENT_DEFINITIONS = [
   },
   {
     id: "engineThreadMode",
+    scope: "webllm-operation",
     label: "Engine thread",
     values: ["main", "worker"],
     controlledValue: "main",
     objectiveMetric: "wall",
     workload: { measuredRuns: 3, scenarios: ["single-turn"], warmupEach: true },
     requireOutputEquality: true,
+  },
+  {
+    id: "weightQuantization",
+    scope: "webllm-operation",
+    label: "Weight quantization",
+    values: ["q4f16_1", "q0f16"],
+    controlledValue: "q4f16_1",
+    objectiveMetric: "wall",
+    policyParameter: "modelQuantization",
+    referenceOverrides: { modelQuantization: "q4f16_1" },
+    supportedModelConfigIds: ["smol-360m", "qwen-0.5b", "llama-1b"],
+    workload: {
+      measuredRuns: 6,
+      scenarios: ["single-turn", "long-history-required"],
+      warmupEach: true,
+    },
+  },
+  {
+    id: "attentionSinkSize",
+    scope: "webllm-setting",
+    webLlmProperty: "attention_sink_size",
+    label: "Attention sink size",
+    values: [0, 4, 8, 16, 32],
+    controlledValue: 0,
+    objectiveMetric: "wall",
+    baseOverrides: {
+      historyTokenBudget: 3000,
+      conversationCacheMode: "prefix-reuse",
+      kvCacheMode: "sliding",
+      slidingWindowSize: 4096,
+    },
+    workload: {
+      measuredRuns: 3,
+      scenarios: ["long-history-required"],
+      warmupEach: true,
+    },
+  },
+  {
+    id: "logprobsMode",
+    scope: "webllm-setting",
+    webLlmProperty: "logprobs",
+    label: "Log-probability collection",
+    values: ["off", "on"],
+    controlledValue: "off",
+    objectiveMetric: "wall",
+    workload: { measuredRuns: 3, scenarios: ["single-turn"] },
+    requireOutputEquality: true,
+  },
+  {
+    id: "temperature",
+    scope: "webllm-setting",
+    webLlmProperty: "temperature",
+    label: "Temperature",
+    values: [0, 0.3, 0.7, 1],
+    controlledValue: 0,
+    objectiveMetric: "wall",
+    workload: { measuredRuns: 3, scenarios: ["single-turn"] },
+  },
+  {
+    id: "topP",
+    scope: "webllm-setting",
+    webLlmProperty: "top_p",
+    label: "Top-p sampling",
+    values: [1, 0.95, 0.85, 0.7],
+    controlledValue: 1,
+    objectiveMetric: "wall",
+    baseOverrides: { temperature: 0.7 },
+    workload: { measuredRuns: 3, scenarios: ["single-turn"] },
+  },
+  {
+    id: "repetitionPenalty",
+    scope: "webllm-setting",
+    webLlmProperty: "repetition_penalty",
+    label: "Repetition penalty",
+    values: [1, 1.05, 1.1, 1.2],
+    controlledValue: 1,
+    objectiveMetric: "wall",
+    workload: { measuredRuns: 3, scenarios: ["single-turn"] },
+  },
+  {
+    id: "frequencyPenalty",
+    scope: "webllm-setting",
+    webLlmProperty: "frequency_penalty",
+    label: "Frequency penalty",
+    values: [0, 0.25, 0.5, 1],
+    controlledValue: 0,
+    objectiveMetric: "wall",
+    workload: { measuredRuns: 3, scenarios: ["single-turn"] },
+  },
+  {
+    id: "presencePenalty",
+    scope: "webllm-setting",
+    webLlmProperty: "presence_penalty",
+    label: "Presence penalty",
+    values: [0, 0.25, 0.5, 1],
+    controlledValue: 0,
+    objectiveMetric: "wall",
+    workload: { measuredRuns: 3, scenarios: ["single-turn"] },
+  },
+  {
+    id: "topLogprobs",
+    scope: "webllm-setting",
+    webLlmProperty: "top_logprobs",
+    label: "Top log-probability count",
+    values: [0, 1, 3, 5],
+    controlledValue: 0,
+    objectiveMetric: "wall",
+    baseOverrides: { logprobsMode: "on" },
+    workload: { measuredRuns: 3, scenarios: ["single-turn"] },
+    requireOutputEquality: true,
+  },
+  {
+    id: "responseFormatMode",
+    scope: "webllm-setting",
+    webLlmProperty: "response_format",
+    label: "JSON-constrained decoding",
+    values: ["unconstrained", "json-object"],
+    controlledValue: "unconstrained",
+    objectiveMetric: "quality",
+    qualityGuardMetric: "wall",
+    supportedTaskProfileIds: ["chat-extract"],
+    requireQualityImprovement: true,
+    workload: {
+      measuredRuns: 6,
+      scenarios: ["single-turn", "long-history-required"],
+    },
   },
 ];
 
@@ -182,6 +329,29 @@ export function getExperimentDefinition(id, overrides = {}) {
   return { ...definition, ...overrides };
 }
 
+export function experimentSupport(parameterId, modelConfigId, taskProfileId) {
+  const definition = getExperimentDefinition(parameterId);
+  if (
+    definition.supportedModelConfigIds &&
+    !definition.supportedModelConfigIds.includes(modelConfigId)
+  ) {
+    return {
+      supported: false,
+      reason: `${definition.label} is unavailable for ${modelConfigId}`,
+    };
+  }
+  if (
+    definition.supportedTaskProfileIds &&
+    !definition.supportedTaskProfileIds.includes(taskProfileId)
+  ) {
+    return {
+      supported: false,
+      reason: `${definition.label} is available only for ${definition.supportedTaskProfileIds.join(", ")}`,
+    };
+  }
+  return { supported: true, reason: "" };
+}
+
 export function buildExperimentPolicies(
   parameterId,
   baseOverrides = {},
@@ -201,6 +371,7 @@ export function buildExperimentPolicies(
     promptTemplateId: BASE_SETTINGS.promptTemplateId,
     useLibraryGenerationDefaults: true,
     outputTokenTier: "library-default",
+    ...definition.referenceOverrides,
   };
   const controlled = definition.values.map((value) => {
     const isBaseline = value === definition.controlledValue;
@@ -326,16 +497,18 @@ export function analyzeControlledExperiment(policies, rows, parameterId) {
     parameterId ?? rows.find((row) => row.experimentParameter)?.experimentParameter
   );
   const objectiveMetric = definition.objectiveMetric;
+  const qualityGuardMetric = definition.qualityGuardMetric ?? "ttft";
+  const timingMetric = objectiveMetric === "quality" ? qualityGuardMetric : objectiveMetric;
   const summaries = policies.map((policy) =>
     summarizeConfiguration(policy, rows.filter((row) => row.policyId === policy.id))
   );
   const controlled = summaries.find((summary) => summary.baselineType === "controlled");
   if (!controlled) throw new Error("controlled baseline is missing");
   const controlledRows = rows.filter((row) => row.policyId === controlled.policyId);
-  const repeatabilityField = objectiveMetric === "wall"
+  const repeatabilityField = timingMetric === "wall"
     ? "matchedWallRepeatabilityIqrPct"
     : "matchedTtftRepeatabilityIqrPct";
-  const objectiveValueField = objectiveMetric === "wall" ? "medianWallMs" : "medianTtftMs";
+  const objectiveValueField = timingMetric === "wall" ? "medianWallMs" : "medianTtftMs";
   const minimumImprovement = Math.max(0.1, controlled[repeatabilityField] ?? 0);
 
   for (const summary of summaries) {
@@ -363,7 +536,12 @@ export function analyzeControlledExperiment(policies, rows, parameterId) {
       controlledRows,
       "output"
     );
-    summary.matchedFasterPairRate = objectiveMetric === "wall"
+    summary.matchedCompletionTokenEqualityRate = matchedEqualityRate(
+      policyRows,
+      controlledRows,
+      "completionTokens"
+    );
+    summary.matchedFasterPairRate = timingMetric === "wall"
       ? matchedWall.fasterPairRate
       : matchedTtft.fasterPairRate;
     if (objectiveMetric === "quality") {
@@ -385,21 +563,30 @@ export function analyzeControlledExperiment(policies, rows, parameterId) {
       summary.medianQualityScore >= controlled.medianQualityScore - 0.1;
     let speedEligible = summary.baselineType === "controlled";
     if (!speedEligible && objectiveMetric === "quality") {
+      const guardDelta = qualityGuardMetric === "wall"
+        ? summary.matchedWallDeltaPct
+        : summary.matchedTtftDeltaPct;
       speedEligible =
-        Number.isFinite(summary.matchedTtftDeltaPct) &&
-        summary.matchedTtftDeltaPct <= summary.minimumRequiredImprovementPct;
+        Number.isFinite(guardDelta) &&
+        guardDelta <= summary.minimumRequiredImprovementPct;
     } else if (!speedEligible) {
       speedEligible =
         Number.isFinite(summary.matchedObjectiveDeltaPct) &&
         summary.matchedObjectiveDeltaPct <= -summary.minimumRequiredImprovementPct &&
         summary.matchedFasterPairRate >= 2 / 3;
     }
+    const latencyOnlyWallComparison =
+      objectiveMetric === "wall" &&
+      policyRows.some((row) => row.taskType === "latency-only");
     summary.eligible =
       summary.baselineType !== "library_default" &&
       summary.successRate === 1 &&
       !summary.anyTruncated &&
       (!definition.requireOutputEquality || summary.matchedOutputEqualityRate === 1) &&
       (!definition.requirePrefixEquality || summary.matchedPrefixEqualityRate === 1) &&
+      (!latencyOnlyWallComparison ||
+        summary.matchedCompletionTokenEqualityRate === 1) &&
+      (!definition.requireQualityImprovement || summary.qualityPassDeltaPoints > 0) &&
       qualityEligible &&
       speedEligible;
     if (summary.baselineType === "library_default") {
@@ -414,7 +601,8 @@ export function analyzeControlledExperiment(policies, rows, parameterId) {
   const winner = summaries
     .filter((summary) => summary.status === "candidate")
     .sort((a, b) => objectiveMetric === "quality"
-      ? b.qualityPassRate - a.qualityPassRate || a.medianTtftMs - b.medianTtftMs
+      ? b.qualityPassRate - a.qualityPassRate ||
+        a[objectiveValueField] - b[objectiveValueField]
       : a.matchedObjectiveDeltaPct - b.matchedObjectiveDeltaPct ||
       a[objectiveValueField] - b[objectiveValueField]
     )[0];
@@ -424,6 +612,7 @@ export function analyzeControlledExperiment(policies, rows, parameterId) {
     recommendedPolicyId: winner?.policyId ?? "",
     criteria: {
       objectiveMetric,
+      qualityGuardMetric: objectiveMetric === "quality" ? qualityGuardMetric : "",
       minimumSuccessRate: 1,
       minimumQualityPassRate: 0.9,
       minimumQualityPassRatePerScenario: 0.9,
@@ -434,6 +623,8 @@ export function analyzeControlledExperiment(policies, rows, parameterId) {
       minimumMatchedFasterPairRate: 2 / 3,
       requireIdenticalOutput: Boolean(definition.requireOutputEquality),
       requireIdenticalConversationPrefix: Boolean(definition.requirePrefixEquality),
+      requireIdenticalCompletionTokensForLatencyOnlyWall: true,
+      requireQualityImprovement: Boolean(definition.requireQualityImprovement),
     },
   };
 }
@@ -456,9 +647,13 @@ export function controlledExperimentSettings(
   variedKeys.add(definition.policyParameter ?? parameterId);
   return {
     variedParameter: definition.id,
+    parameterScope: definition.scope,
+    directWebLlmSetting: definition.scope === "webllm-setting",
+    webLlmProperty: definition.webLlmProperty ?? "",
     values: definition.values,
     controlledValue: definition.controlledValue,
     objectiveMetric: definition.objectiveMetric,
+    qualityGuardMetric: definition.qualityGuardMetric ?? "",
     lockedSettings: Object.fromEntries(
       Object.entries(baseSettings)
         .filter(([key]) => !variedKeys.has(key) && key !== "outputTokenTier")

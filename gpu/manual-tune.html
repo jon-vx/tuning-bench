@@ -39,6 +39,8 @@
     .plot-line { fill: none; stroke: var(--accent); stroke-width: 2; }
     .plot-point { fill: var(--accent); }
     .plot-label { fill: var(--muted); font: 10px ui-monospace, monospace; }
+    #queue-panel select[multiple] { min-width: 210px; min-height: 150px; }
+    #queue-progress { color: var(--accent); }
     pre { max-height: 42vh; }
     @media (max-width: 640px) { input[type="text"] { width: 100%; } }
   </style>
@@ -46,8 +48,25 @@
 <body>
   <main>
     <h1>Controlled WebLLM experiment</h1>
-    <nav><a href="./collect.html">automatic collector</a></nav>
+    <nav><a class="menu-button" href="../index.html">Back to menu</a></nav>
     <p>Fix one device, model, and task. Change one runtime parameter while every other controlled setting stays locked.</p>
+
+    <fieldset id="queue-panel" hidden>
+      <legend>Durable experiment queue</legend>
+      <p>Select items with Ctrl/Cmd-click. The queue is checkpointed after every target and can resume after a browser or server restart.</p>
+      <div class="controls">
+        <label>models<select id="queue-models" multiple></select></label>
+        <label>tasks<select id="queue-tasks" multiple></select></label>
+        <label>parameters<select id="queue-parameters" multiple></select></label>
+      </div>
+      <div class="controls">
+        <button id="queue-configure">Save queue</button>
+        <button id="queue-start" disabled>Start</button>
+        <button id="queue-pause" disabled>Pause after current target</button>
+        <button id="queue-resume" disabled>Resume</button>
+      </div>
+      <p id="queue-progress">Loading campaign…</p>
+    </fieldset>
 
     <fieldset>
       <legend>Experiment definition</legend>
@@ -59,7 +78,6 @@
         <label id="selector-budget-control" hidden>selector history budget<input id="selector-budget" type="number" min="1" value="320" /></label>
         <label>blocks<input id="blocks" type="number" min="1" max="12" value="4" /></label>
         <label>warmups<input id="warmups" type="number" min="0" max="3" value="1" /></label>
-        <label><span>reference</span><span><input id="include-library" type="checkbox" /> untouched WebLLM</span></label>
         <label>latency target<input id="latency-target" type="number" min="250" value="10000" /></label>
       </div>
       <div class="definition">
@@ -100,5 +118,6 @@
     <pre id="log"></pre>
   </main>
   <script type="module" src="./manual-tune.js"></script>
+  <script type="module" src="./manual-campaign.js"></script>
 </body>
 </html>

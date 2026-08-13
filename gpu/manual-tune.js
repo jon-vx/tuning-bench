@@ -4,6 +4,7 @@ import {
   controlledExperimentSettings,
   counterbalancedOrder,
   EXPERIMENT_DEFINITIONS,
+  experimentSupport,
   getExperimentDefinition,
 } from "./controlled-experiment.js";
 import {
@@ -11,10 +12,11 @@ import {
   runFixedModelPoliciesCore,
 } from "./fixed-model-bench.js";
 import { getWebGpuProfile, makeDefaultLabel } from "./device-profile.js";
-import { TASK_PROFILES } from "./task-profiles.js";
+import { MANUAL_TASK_PROFILES } from "./task-profiles.js";
 import { renderDoseResponsePlots } from "./experiment-plots.js";
 import { downloadCSV, downloadJSON } from "../shared/benchmark-utils.js";
 import { manualCsvText, manualFileStem } from "./export-format.js";
+import { modelArtifactId } from "./models.js";
 
 const $ = (id) => document.getElementById(id);
 const runButton = $("run-experiment");
@@ -32,7 +34,6 @@ const labelInput = $("label");
 const blocksInput = $("blocks");
 const warmupsInput = $("warmups");
 const latencyTargetInput = $("latency-target");
-const libraryDefaultInput = $("include-library");
 const selectorBudgetInput = $("selector-budget");
 const selectorBudgetControl = $("selector-budget-control");
 const valuesElement = $("values");
@@ -45,9 +46,11 @@ const plotsElement = $("plots");
 const plotGrid = $("plot-grid");
 
 let payload = null;
+let running = false;
 
 function selectedTaskProfile() {
-  return TASK_PROFILES.find((task) => task.id === taskSelect.value) ?? TASK_PROFILES[0];
+  return MANUAL_TASK_PROFILES.find((task) => task.id === taskSelect.value)
+    ?? MANUAL_TASK_PROFILES[0];
 }
 
 function experimentBaseOverrides(parameterId) {
@@ -68,15 +71,22 @@ function experimentDefinitionOverrides(parameterId) {
   };
 }
 
-function selectedPolicies(parameterId) {
+function selectedPolicies(parameterId, candidatePolicyId = "") {
   const policies = buildExperimentPolicies(
     parameterId,
     experimentBaseOverrides(parameterId),
     experimentDefinitionOverrides(parameterId)
   );
-  return libraryDefaultInput.checked
-    ? policies
-    : policies.filter((policy) => policy.baselineType !== "library_default");
+  const selected = candidatePolicyId
+    ? policies.filter((policy) =>
+      ["library_default", "controlled"].includes(policy.baselineType) ||
+      policy.id === candidatePolicyId
+    )
+    : policies;
+  if (candidatePolicyId && !selected.some((policy) => policy.id === candidatePolicyId)) {
+    throw new Error(`unknown candidate policy: ${candidatePolicyId}`);
+  }
+  return selected;
 }
 
 function experimentWorkload(parameterId) {
@@ -94,7 +104,13 @@ function log(message) {
 }
 
 function setBusy(busy) {
-  runButton.disabled = busy;
+  running = busy;
+  const support = experimentSupport(
+    parameterSelect.value,
+    modelSelect.value,
+    taskSelect.value
+  );
+  runButton.disabled = busy || !support.supported;
   for (const control of document.querySelectorAll("fieldset input, fieldset select")) {
     control.disabled = busy;
   }
@@ -112,6 +128,7 @@ function displayPercent(value, digits = 0) {
 
 function updateDefinition() {
   const parameterId = parameterSelect.value;
+  const support = experimentSupport(parameterId, modelSelect.value, taskSelect.value);
   selectorBudgetControl.hidden = parameterId !== "historySelectionPolicy";
   const settings = controlledExperimentSettings(
     parameterId,
@@ -127,12 +144,15 @@ function updateDefinition() {
     blocksInput.value = String(blocks);
   }
   valuesElement.textContent = settings.values.join(", ");
-  const timingMetric = settings.objectiveMetric === "wall" ? "WALL" : "TTFT";
+  const timingMetric = settings.objectiveMetric === "wall" ||
+      settings.qualityGuardMetric === "wall"
+    ? "WALL"
+    : "TTFT";
   if (parameterId === "distractionHistoryBudget") {
     decisionRuleElement.textContent = "task quality + no truncation + repeatable TTFT gain";
   } else if (settings.objectiveMetric === "quality") {
     decisionRuleElement.textContent =
-      "quality recovery + no truncation + no meaningful TTFT regression";
+      `quality recovery + no truncation + no meaningful ${timingMetric} regression`;
   } else {
     decisionRuleElement.textContent =
       `quality + retention + no truncation + repeatable ${timingMetric} gain`;
@@ -167,6 +187,14 @@ function updateDefinition() {
   workloadElement.textContent =
     `${policies.length} configurations; ${blocks} balanced blocks; ${scenarioText}; ` +
     `${warmupInferences} warmups; ${inferences} inferences`;
+  runButton.disabled = running || !support.supported;
+  if (!support.supported) {
+    statusElement.textContent = support.reason;
+    statusElement.dataset.selectionError = "true";
+  } else if (statusElement.dataset.selectionError) {
+    statusElement.textContent = "idle";
+    delete statusElement.dataset.selectionError;
+  }
 }
 
 function updateProgress(completed, total, phase) {
@@ -210,7 +238,27 @@ function renderResults(analysis) {
   resultTable.hidden = false;
 }
 
-async function runExperiment() {
+export async function runExperiment({
+  blocks: blockOverride,
+  warmups: warmupOverride,
+  measuredRunsPerScenario,
+  measuredRunsPerCase,
+  candidatePolicyId = "",
+  warmupEachPolicy = false,
+  completeCounterbalance = true,
+  orderOffset = 0,
+  mode = "confirmatory",
+  conversationScenarios: scenarioOverride = null,
+} = {}) {
+  const support = experimentSupport(
+    parameterSelect.value,
+    modelSelect.value,
+    taskSelect.value
+  );
+  if (!support.supported) {
+    statusElement.textContent = support.reason;
+    return;
+  }
   setBusy(true);
   payload = null;
   resultTable.hidden = true;
@@ -223,13 +271,20 @@ async function runExperiment() {
     experimentBaseOverrides(parameterId),
     experimentDefinitionOverrides(parameterId)
   );
-  const policies = selectedPolicies(parameterId);
+  const policies = selectedPolicies(parameterId, candidatePolicyId);
   const experiment = experimentWorkload(parameterId);
-  const blocks = Number(blocksInput.value);
-  const warmups = Number(warmupsInput.value);
+  const conversationScenarios = scenarioOverride ?? experiment.conversationScenarios;
+  const blocks = blockOverride ?? Number(blocksInput.value);
+  const warmups = warmupOverride ?? Number(warmupsInput.value);
   const latencyTargetMs = Number(latencyTargetInput.value);
-  const measuredRuns = experiment.measuredRuns;
-  const warmupInferences = experiment.warmupPerConfiguration
+  const taskCaseCount = selectedTaskProfile().cases.length;
+  const measuredRuns = measuredRunsPerCase == null
+    ? measuredRunsPerScenario == null
+      ? experiment.measuredRuns
+      : measuredRunsPerScenario * conversationScenarios.length
+    : measuredRunsPerCase * taskCaseCount * conversationScenarios.length;
+  const warmupPerConfiguration = warmupEachPolicy || experiment.warmupPerConfiguration;
+  const warmupInferences = warmupPerConfiguration
     ? policies.length * blocks * warmups
     : blocks * warmups;
   const totalInferences = policies.length * blocks * measuredRuns + warmupInferences;
@@ -238,7 +293,7 @@ async function runExperiment() {
   const executions = [];
 
   try {
-    if (blocks % policies.length !== 0) {
+    if (completeCounterbalance && blocks % policies.length !== 0) {
       throw new Error(`block count must be a multiple of ${policies.length}`);
     }
     statusElement.textContent = "collecting device profile...";
@@ -247,14 +302,23 @@ async function runExperiment() {
     labelInput.value = label;
 
     for (let blockIndex = 0; blockIndex < blocks; blockIndex++) {
-      const order = counterbalancedOrder(policies, blockIndex);
+      const order = counterbalancedOrder(policies, blockIndex + orderOffset);
       log(`\n=== block ${blockIndex + 1}/${blocks}: ${order.map((policy) => policy.id).join(" -> ")} ===`);
       for (const [orderIndex, policy] of order.entries()) {
         const phase = `block ${blockIndex + 1}/${blocks}, ${policy.label}`;
-        const policyWarmups = experiment.warmupPerConfiguration || orderIndex === 0 ? warmups : 0;
+        const policyWarmups = warmupPerConfiguration || orderIndex === 0 ? warmups : 0;
+        const artifactId = policy.modelQuantization
+          ? modelArtifactId(modelSelect.value, policy.modelQuantization)
+          : "";
+        if (policy.modelQuantization && !artifactId) {
+          throw new Error(
+            `${policy.modelQuantization} is unavailable for ${modelSelect.value}`
+          );
+        }
         let completedForPolicy = 0;
         const result = await runFixedModelPoliciesCore({
           modelConfigId: modelSelect.value,
+          modelArtifactId: artifactId,
           taskProfileId: taskSelect.value,
           latencyTargetMs,
           policies: [policy],
@@ -262,7 +326,8 @@ async function runExperiment() {
           runs: measuredRuns,
           randomizeOrder: false,
           longHistoryScenario: "long-history-required",
-          measuredConversationScenarios: experiment.conversationScenarios,
+          measuredConversationScenarios: conversationScenarios,
+          measuredScenarioOrder: mode === "rapid" ? "scenarios-first" : "cases-first",
           label,
           deviceProfile,
           logFn: (message) => log(`[block ${blockIndex + 1}/${policy.id}] ${message}`),
@@ -307,15 +372,26 @@ async function runExperiment() {
       deviceProfile,
       experiment: {
         ...settings,
+        values: candidatePolicyId
+          ? policies
+            .filter((policy) => policy.baselineType !== "library_default")
+            .map((policy) => policy.experimentValue)
+          : settings.values,
         modelConfigId: modelSelect.value,
         taskProfileId: taskSelect.value,
         blocks,
-        warmupsPerBlock: experiment.warmupPerConfiguration ? null : warmups,
-        warmupsPerConfiguration: experiment.warmupPerConfiguration ? warmups : null,
+        warmupsPerBlock: warmupPerConfiguration ? null : warmups,
+        warmupsPerConfiguration: warmupPerConfiguration ? warmups : null,
         measuredRunsPerBlock: measuredRuns,
-        conversationScenarios: experiment.conversationScenarios,
+        measuredRunsPerCase: measuredRunsPerCase ?? null,
+        taskCaseIds: selectedTaskProfile().cases.map((taskCase) => taskCase.id),
+        candidatePolicyId: candidatePolicyId || null,
+        mode,
+        completeCounterbalance,
+        measuredScenarioOrder: mode === "rapid" ? "scenarios-first" : "cases-first",
+        conversationScenarios,
         executionOrders: Array.from({ length: blocks }, (_, index) =>
-          counterbalancedOrder(policies, index).map((policy) => policy.id)
+          counterbalancedOrder(policies, index + orderOffset).map((policy) => policy.id)
         ),
       },
       policies,
@@ -351,17 +427,29 @@ function populate() {
   for (const model of models) modelSelect.add(new Option(model.model, model.id));
   const qwen = models.find((model) => model.family === "qwen-0.5b");
   if (qwen) modelSelect.value = qwen.id;
-  for (const task of TASK_PROFILES) taskSelect.add(new Option(task.label, task.id));
+  for (const task of MANUAL_TASK_PROFILES) {
+    taskSelect.add(new Option(task.label, task.id));
+  }
   taskSelect.value = "chat-summarize";
-  for (const definition of EXPERIMENT_DEFINITIONS) {
-    parameterSelect.add(new Option(definition.label, definition.id));
+  const scopeGroups = [
+    ["webllm-setting", "Direct WebLLM settings"],
+    ["webllm-operation", "WebLLM operations / artifacts"],
+    ["application", "App-level (not direct WebLLM settings)"],
+  ];
+  for (const [scope, label] of scopeGroups) {
+    const group = document.createElement("optgroup");
+    group.label = label;
+    for (const definition of EXPERIMENT_DEFINITIONS.filter((item) => item.scope === scope)) {
+      group.appendChild(new Option(definition.label, definition.id));
+    }
+    parameterSelect.appendChild(group);
   }
   for (const control of [
     parameterSelect,
+    modelSelect,
     taskSelect,
     blocksInput,
     warmupsInput,
-    libraryDefaultInput,
     selectorBudgetInput,
   ]) {
     control.addEventListener("change", updateDefinition);
@@ -369,7 +457,7 @@ function populate() {
   updateDefinition();
 }
 
-runButton.addEventListener("click", runExperiment);
+runButton.addEventListener("click", () => runExperiment());
 exportJsonButton.addEventListener("click", () => {
   downloadJSON(payload, `${manualFileStem(payload)}.json`);
 });

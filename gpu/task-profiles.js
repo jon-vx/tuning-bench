@@ -351,6 +351,49 @@ export const TASK_PROFILES = [
   },
 ];
 
+export const LATENCY_TASK_PROFILE = {
+  id: "chat-latency",
+  label: "General query latency",
+  taskType: "latency-only",
+  systemPrompt: "Answer the user's question directly and concisely.",
+  compactSystemPrompt: "Answer concisely.",
+  outputTokenLimits: { short: 32, standard: 64, expanded: 128 },
+  cases: [
+    {
+      id: "material-temperature",
+      prompt: "Why does metal feel colder than wood at the same temperature?",
+      quality: { latencyOnly: true },
+    },
+    {
+      id: "sleep-consistency",
+      prompt: "What are three practical ways to improve sleep consistency?",
+      quality: { latencyOnly: true },
+    },
+    {
+      id: "memory-storage",
+      prompt: "What is the difference between RAM and persistent storage?",
+      quality: { latencyOnly: true },
+    },
+    {
+      id: "transport-comparison",
+      prompt: "Compare public transportation with private car travel.",
+      quality: { latencyOnly: true },
+    },
+    {
+      id: "worker-overhead",
+      prompt: "Why can adding more workers sometimes make a program slower?",
+      quality: { latencyOnly: true },
+    },
+    {
+      id: "interview-checklist",
+      prompt: "Create a short checklist for preparing for a job interview.",
+      quality: { latencyOnly: true },
+    },
+  ],
+};
+
+export const MANUAL_TASK_PROFILES = [...TASK_PROFILES, LATENCY_TASK_PROFILE];
+
 export const LATENCY_BUDGETS = [
   { id: "5", label: "Interactive", targetMs: 5000 },
   { id: "10", label: "Balanced", targetMs: 10000 },
@@ -358,7 +401,7 @@ export const LATENCY_BUDGETS = [
 ];
 
 export function getTaskProfile(id) {
-  return TASK_PROFILES.find((profile) => profile.id === id) ?? TASK_PROFILES[0];
+  return MANUAL_TASK_PROFILES.find((profile) => profile.id === id) ?? TASK_PROFILES[0];
 }
 
 export function getTaskCase(taskProfile, index) {
